@@ -23,6 +23,9 @@ COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/src/scripts ./src/scripts
 COPY .env.docker ./.env
 
+# Install tsx for running TypeScript scripts in production
+RUN npm install -g tsx
+
 RUN chmod +x ./src/scripts/init.sh && mkdir -p /app/data && chown -R nextjs:nodejs /app/data && chmod 755 /app/data
 
 USER nextjs
