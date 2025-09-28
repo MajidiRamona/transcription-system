@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Ramona Transcription System",
+  title: "UNHCR Transcription System",
   description: "AI-powered transcription processing and validation system",
 };
 
