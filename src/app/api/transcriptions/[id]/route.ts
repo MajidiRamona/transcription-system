@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/auth'
+import { getServerSession } from 'next-auth'
+import { authConfig } from '@/lib/auth-config'
 import { TranscriptionState } from '@/generated/prisma'
 
 export async function GET(
@@ -9,7 +10,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
+    const session = await getServerSession(authConfig)
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -59,7 +60,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
+    const session = await getServerSession(authConfig)
 
     if (!session?.user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -109,7 +110,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params
-    const session = await auth()
+    const session = await getServerSession(authConfig)
 
     if (!session?.user || session.user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
