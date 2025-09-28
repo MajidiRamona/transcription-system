@@ -5,6 +5,18 @@ echo "🚀 Starting application initialization..."
 # Wait for any database file locks to be released
 sleep 2
 
+# Ensure data directory exists and has correct permissions
+echo "📁 Setting up data directory..."
+mkdir -p /app/data
+chmod 755 /app/data
+
+# Create empty database file if it doesn't exist
+if [ ! -f "/app/data/database.db" ]; then
+  echo "📄 Creating database file..."
+  touch /app/data/database.db
+  chmod 644 /app/data/database.db
+fi
+
 # Run Prisma migrations
 echo "📊 Running Prisma migrations..."
 npx prisma migrate deploy

@@ -23,7 +23,7 @@ COPY --from=builder /app/src/generated ./src/generated
 COPY --from=builder /app/src/scripts ./src/scripts
 COPY .env.docker ./.env
 
-RUN chmod +x ./src/scripts/init.sh && mkdir -p /app/data && chown nextjs:nodejs /app/data
+RUN chmod +x ./src/scripts/init.sh && mkdir -p /app/data && chown -R nextjs:nodejs /app/data && chmod 755 /app/data
 
 USER nextjs
 EXPOSE 3003
