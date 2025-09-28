@@ -1,0 +1,80 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database (recommended for production)
+  postgres:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_DB: ramona_transcription
+      POSTGRES_USER: ramona_user
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ramona_secure_password_2024}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ramona_user -d ramona_transcription"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Main Application
+  app:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      # Database
+      DATABASE_URL: postgresql://ramona_user:${POSTGRES_PASSWORD:-ramona_secure_password_2024}@postgres:5432/ramona_transcription
+
+      # NextAuth
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET:-your-super-secret-key-change-this-in-production-2024}
+      NEXTAUTH_URL: ${NEXTAUTH_URL:-http://localhost:3000}
+
+      # Swiss AI Platform API Key
+      SWISS_AI_PLATFORM_API_KEY: ${SWISS_AI_PLATFORM_API_KEY:-your-swiss-ai-api-key-here}
+
+      # Apertus Configuration
+      APERTUS_BASE_URL: ${APERTUS_BASE_URL:-https://api.swisscom.com/layer/swiss-ai-weeks/apertus-70b/v1}
+      APERTUS_MODEL_ID: ${APERTUS_MODEL_ID:-swiss-ai/Apertus-70B}
+      APERTUS_MAX_RETRIES: ${APERTUS_MAX_RETRIES:-5}
+      APERTUS_BASE_DELAY: ${APERTUS_BASE_DELAY:-1.0}
+      APERTUS_MAX_DELAY: ${APERTUS_MAX_DELAY:-16}
+      APERTUS_PRECALL_SLEEP: ${APERTUS_PRECALL_SLEEP:-0.5}
+
+      # Production settings
+      NODE_ENV: production
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    restart: unless-stopped
+    init: true
+
+  # Nginx Reverse Proxy (optional, for production)
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - app
+    restart: unless-stopped
+    profiles:
+      - production
+
+volumes:
+  postgres_data:
+
+networks:
+  default:
+    name: ramona-network

@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  username  String   @unique
+  password  String
+  role      UserRole
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  transcriptionsAssigned Transcription[] @relation("AssignedTo")
+  transcriptionsEdited   Transcription[] @relation("EditedBy")
+}
+
+model Transcription {
+  id                String              @id @default(cuid())
+  filename          String
+  filePath          String
+  content           String              @default("")
+  state             TranscriptionState  @default(PENDING)
+
+  assessmentId      String?
+  country           String?
+  dateOfDiscussion  String?
+  location          String?
+  purpose           String?
+  method            String?
+  language          String?
+
+  facilitatorName   String?
+  facilitatorOrg    String?
+  facilitatorEmail  String?
+
+  noteTakerName     String?
+  noteTakerOrg      String?
+  noteTakerEmail    String?
+
+  participantsNumber        Int?
+  participantsNationalities String?
+  participantsProfile       String?
+  participantsEnvironment   String?
+  participantsSex           String?
+  participantsAgeRange      String?
+  participantsGroupType     String?
+
+  aiProcessedAt     DateTime?
+  aiError           String?
+
+  assignedToId      String?
+  assignedTo        User?    @relation("AssignedTo", fields: [assignedToId], references: [id])
+
+  lastEditedById    String?
+  lastEditedBy      User?    @relation("EditedBy", fields: [lastEditedById], references: [id])
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  topics            Topic[]
+}
+
+model Topic {
+  id                    String  @id @default(cuid())
+  transcriptionId       String
+  transcription         Transcription @relation(fields: [transcriptionId], references: [id], onDelete: Cascade)
+
+  outcomeAreaCode       String?
+  outcomeAreaName       String?
+  category              String?
+  subcategory           String?
+  type                  String?
+  subcategoryDefinition String?
+  description           String?
+  assessment            String?
+  citations             String?
+  confidence            Float?
+
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+}
+
+enum UserRole {
+  ADMIN
+  VALIDATOR1
+  VALIDATOR2
+}
+
+enum TranscriptionState {
+  PENDING
+  CHECK_BY_AI
+  CHECK_BY_VALIDATOR
+  COMPLETE
+}
