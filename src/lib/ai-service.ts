@@ -12,30 +12,73 @@ Return STRICT JSON matching this schema (no extra keys, no commentary):
 
 {
   "assessmentId": "string (optional)",
+  "assessmentIdCitation": "string (exact quote from transcript)",
+  "assessmentIdConfidence": "float (0.0-1.0)",
   "country": "string",
+  "countryCitation": "string (exact quote from transcript)",
+  "countryConfidence": "float (0.0-1.0)",
   "dateOfDiscussion": "string",
+  "dateOfDiscussionCitation": "string (exact quote from transcript)",
+  "dateOfDiscussionConfidence": "float (0.0-1.0)",
   "location": "string",
+  "locationCitation": "string (exact quote from transcript)",
+  "locationConfidence": "float (0.0-1.0)",
   "purpose": "string",
+  "purposeCitation": "string (exact quote from transcript)",
+  "purposeConfidence": "float (0.0-1.0)",
   "method": "FGD | KII | Observation | Other",
+  "methodCitation": "string (exact quote from transcript)",
+  "methodConfidence": "float (0.0-1.0)",
   "facilitatorName": "string",
+  "facilitatorNameCitation": "string (exact quote from transcript)",
+  "facilitatorNameConfidence": "float (0.0-1.0)",
   "facilitatorOrg": "string",
+  "facilitatorOrgCitation": "string (exact quote from transcript)",
+  "facilitatorOrgConfidence": "float (0.0-1.0)",
   "facilitatorEmail": "string",
+  "facilitatorEmailCitation": "string (exact quote from transcript)",
+  "facilitatorEmailConfidence": "float (0.0-1.0)",
   "noteTakerName": "string",
+  "noteTakerNameCitation": "string (exact quote from transcript)",
+  "noteTakerNameConfidence": "float (0.0-1.0)",
   "noteTakerOrg": "string",
+  "noteTakerOrgCitation": "string (exact quote from transcript)",
+  "noteTakerOrgConfidence": "float (0.0-1.0)",
   "noteTakerEmail": "string",
+  "noteTakerEmailCitation": "string (exact quote from transcript)",
+  "noteTakerEmailConfidence": "float (0.0-1.0)",
   "participantsNumber": "integer",
+  "participantsNumberCitation": "string (exact quote from transcript)",
+  "participantsNumberConfidence": "float (0.0-1.0)",
   "participantsNationalities": "string",
+  "participantsNationalitiesCitation": "string (exact quote from transcript)",
+  "participantsNationalitiesConfidence": "float (0.0-1.0)",
   "participantsProfile": "string",
+  "participantsProfileCitation": "string (exact quote from transcript)",
+  "participantsProfileConfidence": "float (0.0-1.0)",
   "participantsEnvironment": "string",
+  "participantsEnvironmentCitation": "string (exact quote from transcript)",
+  "participantsEnvironmentConfidence": "float (0.0-1.0)",
   "participantsSex": "string",
+  "participantsSexCitation": "string (exact quote from transcript)",
+  "participantsSexConfidence": "float (0.0-1.0)",
   "participantsAgeRange": "string",
+  "participantsAgeRangeCitation": "string (exact quote from transcript)",
+  "participantsAgeRangeConfidence": "float (0.0-1.0)",
   "participantsGroupType": "string",
-  "language": "string"
+  "participantsGroupTypeCitation": "string (exact quote from transcript)",
+  "participantsGroupTypeConfidence": "float (0.0-1.0)",
+  "language": "string",
+  "languageCitation": "string (exact quote from transcript)",
+  "languageConfidence": "float (0.0-1.0)"
 }
 
 Rules:
 - If a field is missing, use an empty value: "", 0, or null.
 - For participant fields, provide comma-separated strings where applicable.
+- Citations must be EXACT quotes from the transcript that support the extracted value.
+- Confidence should reflect how certain you are about the extraction (1.0 = completely certain, 0.0 = complete guess).
+- If no citation can be found for a field, set citation to empty string and confidence to 0.0.
 - Output JSON only, no explanations.`
 
 // System prompt for topic classification

@@ -68,10 +68,29 @@ export async function PUT(
 
     const data = await request.json()
 
+    // Exclude read-only fields that shouldn't be updated directly
+    const {
+      id: dataId,
+      createdAt,
+      updatedAt,
+      assignedTo,
+      lastEditedBy,
+      topics,
+      ...updateData
+    } = data
+
+    // Validate state transitions if provided
+    if (updateData.state && !Object.values(TranscriptionState).includes(updateData.state)) {
+      return NextResponse.json(
+        { error: 'Invalid transcription state' },
+        { status: 400 }
+      )
+    }
+
     const updatedTranscription = await prisma.transcription.update({
       where: { id },
       data: {
-        ...data,
+        ...updateData,
         lastEditedById: session.user.id,
         updatedAt: new Date(),
       },

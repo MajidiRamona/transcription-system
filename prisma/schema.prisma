@@ -29,28 +29,68 @@ model Transcription {
   state             TranscriptionState  @default(PENDING)
 
   assessmentId      String?
+  assessmentIdCitation String?
+  assessmentIdConfidence Float?
   country           String?
+  countryCitation   String?
+  countryConfidence Float?
   dateOfDiscussion  String?
+  dateOfDiscussionCitation String?
+  dateOfDiscussionConfidence Float?
   location          String?
+  locationCitation  String?
+  locationConfidence Float?
   purpose           String?
+  purposeCitation   String?
+  purposeConfidence Float?
   method            String?
+  methodCitation    String?
+  methodConfidence  Float?
   language          String?
+  languageCitation  String?
+  languageConfidence Float?
 
   facilitatorName   String?
+  facilitatorNameCitation String?
+  facilitatorNameConfidence Float?
   facilitatorOrg    String?
+  facilitatorOrgCitation String?
+  facilitatorOrgConfidence Float?
   facilitatorEmail  String?
+  facilitatorEmailCitation String?
+  facilitatorEmailConfidence Float?
 
   noteTakerName     String?
+  noteTakerNameCitation String?
+  noteTakerNameConfidence Float?
   noteTakerOrg      String?
+  noteTakerOrgCitation String?
+  noteTakerOrgConfidence Float?
   noteTakerEmail    String?
+  noteTakerEmailCitation String?
+  noteTakerEmailConfidence Float?
 
   participantsNumber        Int?
+  participantsNumberCitation String?
+  participantsNumberConfidence Float?
   participantsNationalities String?
+  participantsNationalitiesCitation String?
+  participantsNationalitiesConfidence Float?
   participantsProfile       String?
+  participantsProfileCitation String?
+  participantsProfileConfidence Float?
   participantsEnvironment   String?
+  participantsEnvironmentCitation String?
+  participantsEnvironmentConfidence Float?
   participantsSex           String?
+  participantsSexCitation   String?
+  participantsSexConfidence Float?
   participantsAgeRange      String?
+  participantsAgeRangeCitation String?
+  participantsAgeRangeConfidence Float?
   participantsGroupType     String?
+  participantsGroupTypeCitation String?
+  participantsGroupTypeConfidence Float?
 
   aiProcessedAt     DateTime?
   aiError           String?

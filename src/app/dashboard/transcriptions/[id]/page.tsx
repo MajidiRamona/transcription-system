@@ -25,30 +25,70 @@ interface Transcription {
   content: string
   state: 'PENDING' | 'CHECK_BY_AI' | 'CHECK_BY_VALIDATOR' | 'COMPLETE'
 
-  // Metadata fields
+  // Metadata fields with citations and confidence
   assessmentId?: string
+  assessmentIdCitation?: string
+  assessmentIdConfidence?: number
   country?: string
+  countryCitation?: string
+  countryConfidence?: number
   dateOfDiscussion?: string
+  dateOfDiscussionCitation?: string
+  dateOfDiscussionConfidence?: number
   location?: string
+  locationCitation?: string
+  locationConfidence?: number
   purpose?: string
+  purposeCitation?: string
+  purposeConfidence?: number
   method?: string
+  methodCitation?: string
+  methodConfidence?: number
   language?: string
+  languageCitation?: string
+  languageConfidence?: number
 
   facilitatorName?: string
+  facilitatorNameCitation?: string
+  facilitatorNameConfidence?: number
   facilitatorOrg?: string
+  facilitatorOrgCitation?: string
+  facilitatorOrgConfidence?: number
   facilitatorEmail?: string
+  facilitatorEmailCitation?: string
+  facilitatorEmailConfidence?: number
 
   noteTakerName?: string
+  noteTakerNameCitation?: string
+  noteTakerNameConfidence?: number
   noteTakerOrg?: string
+  noteTakerOrgCitation?: string
+  noteTakerOrgConfidence?: number
   noteTakerEmail?: string
+  noteTakerEmailCitation?: string
+  noteTakerEmailConfidence?: number
 
   participantsNumber?: number
+  participantsNumberCitation?: string
+  participantsNumberConfidence?: number
   participantsNationalities?: string
+  participantsNationalitiesCitation?: string
+  participantsNationalitiesConfidence?: number
   participantsProfile?: string
+  participantsProfileCitation?: string
+  participantsProfileConfidence?: number
   participantsEnvironment?: string
+  participantsEnvironmentCitation?: string
+  participantsEnvironmentConfidence?: number
   participantsSex?: string
+  participantsSexCitation?: string
+  participantsSexConfidence?: number
   participantsAgeRange?: string
+  participantsAgeRangeCitation?: string
+  participantsAgeRangeConfidence?: number
   participantsGroupType?: string
+  participantsGroupTypeCitation?: string
+  participantsGroupTypeConfidence?: number
 
   assignedTo?: {
     username: string
@@ -181,6 +221,133 @@ export default function TranscriptionDetail({ params }: { params: Promise<{ id: 
     }
   }
 
+  const getConfidenceColor = (confidence?: number) => {
+    if (!confidence) return 'text-gray-500'
+    if (confidence >= 0.8) return 'text-green-600'
+    if (confidence >= 0.6) return 'text-yellow-600'
+    return 'text-red-600'
+  }
+
+  const MetadataField = ({
+    label,
+    value,
+    citation,
+    confidence,
+    type = 'text',
+    onChange,
+    options,
+    rows
+  }: {
+    label: string
+    value?: string | number
+    citation?: string
+    confidence?: number
+    type?: 'text' | 'email' | 'number' | 'select' | 'textarea'
+    onChange: (value: string | number) => void
+    options?: string[]
+    rows?: number
+  }) => (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <label className="block text-sm font-medium text-gray-700">{label}</label>
+        {confidence && (
+          <div className="flex items-center space-x-2">
+            <span className={`text-xs font-medium ${getConfidenceColor(confidence)}`}>
+              {(confidence * 100).toFixed(0)}%
+            </span>
+            <span className="text-xs text-gray-400">confidence</span>
+          </div>
+        )}
+      </div>
+
+      {type === 'select' ? (
+        <select
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        >
+          <option value="">Select {label.toLowerCase()}</option>
+          {options?.map(option => (
+            <option key={option} value={option}>{option}</option>
+          ))}
+        </select>
+      ) : type === 'textarea' ? (
+        <textarea
+          value={value || ''}
+          onChange={(e) => onChange(e.target.value)}
+          rows={rows || 3}
+          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        />
+      ) : (
+        <input
+          type={type}
+          value={value || ''}
+          onChange={(e) => onChange(type === 'number' ? parseInt(e.target.value) || 0 : e.target.value)}
+          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+        />
+      )}
+
+      {citation && (
+        <div className="bg-blue-50 border border-blue-200 rounded-md p-2">
+          <div className="text-xs text-blue-700 font-medium mb-1">Source Citation:</div>
+          <div className="text-xs text-blue-800 italic">"{citation}"</div>
+        </div>
+      )}
+    </div>
+  )
+
+  const handleApprove = async () => {
+    if (!transcription) return
+
+    try {
+      const response = await fetch(`/api/transcriptions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...transcription,
+          state: 'COMPLETE',
+        }),
+      })
+
+      if (response.ok) {
+        await fetchTranscription()
+        alert('Transcription approved and marked as complete!')
+      }
+    } catch (err) {
+      setError('Failed to approve transcription')
+    }
+  }
+
+  const handleReject = async () => {
+    if (!transcription) return
+
+    const reason = prompt('Please provide a reason for rejection:')
+    if (!reason) return
+
+    try {
+      const response = await fetch(`/api/transcriptions/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...transcription,
+          state: 'PENDING',
+          aiError: `Rejected by validator: ${reason}`,
+        }),
+      })
+
+      if (response.ok) {
+        await fetchTranscription()
+        alert('Transcription rejected and sent back for revision!')
+      }
+    } catch (err) {
+      setError('Failed to reject transcription')
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -214,13 +381,21 @@ export default function TranscriptionDetail({ params }: { params: Promise<{ id: 
               </span>
             </div>
             <div className="flex items-center space-x-3">
-              {transcription.state === 'CHECK_BY_VALIDATOR' && session?.user.role !== 'ADMIN' && (
-                <button
-                  onClick={handleMarkComplete}
-                  className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
-                >
-                  Mark Complete
-                </button>
+              {transcription.state === 'CHECK_BY_VALIDATOR' && (session?.user.role === 'VALIDATOR1' || session?.user.role === 'VALIDATOR2') && (
+                <>
+                  <button
+                    onClick={handleApprove}
+                    className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={handleReject}
+                    className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+                  >
+                    Reject
+                  </button>
+                </>
               )}
               <button
                 onClick={handleSave}
@@ -306,214 +481,167 @@ export default function TranscriptionDetail({ params }: { params: Promise<{ id: 
                 {/* Basic Information */}
                 <div className="space-y-4">
                   <h4 className="font-medium text-gray-900">Basic Information</h4>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Assessment ID</label>
-                    <input
-                      type="text"
-                      value={transcription.assessmentId || ''}
-                      onChange={(e) => handleFieldChange('assessmentId', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Country</label>
-                    <input
-                      type="text"
-                      value={transcription.country || ''}
-                      onChange={(e) => handleFieldChange('country', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Date of Discussion</label>
-                    <input
-                      type="text"
-                      value={transcription.dateOfDiscussion || ''}
-                      onChange={(e) => handleFieldChange('dateOfDiscussion', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Location</label>
-                    <input
-                      type="text"
-                      value={transcription.location || ''}
-                      onChange={(e) => handleFieldChange('location', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Purpose</label>
-                    <textarea
-                      value={transcription.purpose || ''}
-                      onChange={(e) => handleFieldChange('purpose', e.target.value)}
-                      rows={3}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Method</label>
-                    <select
-                      value={transcription.method || ''}
-                      onChange={(e) => handleFieldChange('method', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    >
-                      <option value="">Select method</option>
-                      <option value="FGD">FGD</option>
-                      <option value="KII">KII</option>
-                      <option value="Observation">Observation</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
+                  <MetadataField
+                    label="Assessment ID"
+                    value={transcription.assessmentId}
+                    citation={transcription.assessmentIdCitation}
+                    confidence={transcription.assessmentIdConfidence}
+                    onChange={(value) => handleFieldChange('assessmentId', value)}
+                  />
+                  <MetadataField
+                    label="Country"
+                    value={transcription.country}
+                    citation={transcription.countryCitation}
+                    confidence={transcription.countryConfidence}
+                    onChange={(value) => handleFieldChange('country', value)}
+                  />
+                  <MetadataField
+                    label="Date of Discussion"
+                    value={transcription.dateOfDiscussion}
+                    citation={transcription.dateOfDiscussionCitation}
+                    confidence={transcription.dateOfDiscussionConfidence}
+                    onChange={(value) => handleFieldChange('dateOfDiscussion', value)}
+                  />
+                  <MetadataField
+                    label="Location"
+                    value={transcription.location}
+                    citation={transcription.locationCitation}
+                    confidence={transcription.locationConfidence}
+                    onChange={(value) => handleFieldChange('location', value)}
+                  />
+                  <MetadataField
+                    label="Purpose"
+                    value={transcription.purpose}
+                    citation={transcription.purposeCitation}
+                    confidence={transcription.purposeConfidence}
+                    type="textarea"
+                    rows={3}
+                    onChange={(value) => handleFieldChange('purpose', value)}
+                  />
+                  <MetadataField
+                    label="Method"
+                    value={transcription.method}
+                    citation={transcription.methodCitation}
+                    confidence={transcription.methodConfidence}
+                    type="select"
+                    options={['FGD', 'KII', 'Observation', 'Other']}
+                    onChange={(value) => handleFieldChange('method', value)}
+                  />
+                  <MetadataField
+                    label="Language"
+                    value={transcription.language}
+                    citation={transcription.languageCitation}
+                    confidence={transcription.languageConfidence}
+                    onChange={(value) => handleFieldChange('language', value)}
+                  />
                 </div>
 
                 {/* Staff Information */}
                 <div className="space-y-4">
                   <h4 className="font-medium text-gray-900">Staff Information</h4>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Facilitator Name</label>
-                    <input
-                      type="text"
-                      value={transcription.facilitatorName || ''}
-                      onChange={(e) => handleFieldChange('facilitatorName', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Facilitator Organization</label>
-                    <input
-                      type="text"
-                      value={transcription.facilitatorOrg || ''}
-                      onChange={(e) => handleFieldChange('facilitatorOrg', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Facilitator Email</label>
-                    <input
-                      type="email"
-                      value={transcription.facilitatorEmail || ''}
-                      onChange={(e) => handleFieldChange('facilitatorEmail', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Note Taker Name</label>
-                    <input
-                      type="text"
-                      value={transcription.noteTakerName || ''}
-                      onChange={(e) => handleFieldChange('noteTakerName', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Note Taker Organization</label>
-                    <input
-                      type="text"
-                      value={transcription.noteTakerOrg || ''}
-                      onChange={(e) => handleFieldChange('noteTakerOrg', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Note Taker Email</label>
-                    <input
-                      type="email"
-                      value={transcription.noteTakerEmail || ''}
-                      onChange={(e) => handleFieldChange('noteTakerEmail', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                    />
-                  </div>
+                  <MetadataField
+                    label="Facilitator Name"
+                    value={transcription.facilitatorName}
+                    citation={transcription.facilitatorNameCitation}
+                    confidence={transcription.facilitatorNameConfidence}
+                    onChange={(value) => handleFieldChange('facilitatorName', value)}
+                  />
+                  <MetadataField
+                    label="Facilitator Organization"
+                    value={transcription.facilitatorOrg}
+                    citation={transcription.facilitatorOrgCitation}
+                    confidence={transcription.facilitatorOrgConfidence}
+                    onChange={(value) => handleFieldChange('facilitatorOrg', value)}
+                  />
+                  <MetadataField
+                    label="Facilitator Email"
+                    value={transcription.facilitatorEmail}
+                    citation={transcription.facilitatorEmailCitation}
+                    confidence={transcription.facilitatorEmailConfidence}
+                    type="email"
+                    onChange={(value) => handleFieldChange('facilitatorEmail', value)}
+                  />
+                  <MetadataField
+                    label="Note Taker Name"
+                    value={transcription.noteTakerName}
+                    citation={transcription.noteTakerNameCitation}
+                    confidence={transcription.noteTakerNameConfidence}
+                    onChange={(value) => handleFieldChange('noteTakerName', value)}
+                  />
+                  <MetadataField
+                    label="Note Taker Organization"
+                    value={transcription.noteTakerOrg}
+                    citation={transcription.noteTakerOrgCitation}
+                    confidence={transcription.noteTakerOrgConfidence}
+                    onChange={(value) => handleFieldChange('noteTakerOrg', value)}
+                  />
+                  <MetadataField
+                    label="Note Taker Email"
+                    value={transcription.noteTakerEmail}
+                    citation={transcription.noteTakerEmailCitation}
+                    confidence={transcription.noteTakerEmailConfidence}
+                    type="email"
+                    onChange={(value) => handleFieldChange('noteTakerEmail', value)}
+                  />
                 </div>
 
                 {/* Participants Information */}
                 <div className="space-y-4 md:col-span-2">
                   <h4 className="font-medium text-gray-900">Participants Information</h4>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Number of Participants</label>
-                      <input
-                        type="number"
-                        value={transcription.participantsNumber || ''}
-                        onChange={(e) => handleFieldChange('participantsNumber', parseInt(e.target.value) || 0)}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Age Range</label>
-                      <input
-                        type="text"
-                        value={transcription.participantsAgeRange || ''}
-                        onChange={(e) => handleFieldChange('participantsAgeRange', e.target.value)}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Group Type</label>
-                      <input
-                        type="text"
-                        value={transcription.participantsGroupType || ''}
-                        onChange={(e) => handleFieldChange('participantsGroupType', e.target.value)}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                      />
-                    </div>
+                    <MetadataField
+                      label="Number of Participants"
+                      value={transcription.participantsNumber}
+                      citation={transcription.participantsNumberCitation}
+                      confidence={transcription.participantsNumberConfidence}
+                      type="number"
+                      onChange={(value) => handleFieldChange('participantsNumber', value)}
+                    />
+                    <MetadataField
+                      label="Age Range"
+                      value={transcription.participantsAgeRange}
+                      citation={transcription.participantsAgeRangeCitation}
+                      confidence={transcription.participantsAgeRangeConfidence}
+                      onChange={(value) => handleFieldChange('participantsAgeRange', value)}
+                    />
+                    <MetadataField
+                      label="Group Type"
+                      value={transcription.participantsGroupType}
+                      citation={transcription.participantsGroupTypeCitation}
+                      confidence={transcription.participantsGroupTypeConfidence}
+                      onChange={(value) => handleFieldChange('participantsGroupType', value)}
+                    />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Nationalities</label>
-                      <input
-                        type="text"
-                        value={transcription.participantsNationalities || ''}
-                        onChange={(e) => handleFieldChange('participantsNationalities', e.target.value)}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder="Separate multiple values with semicolons"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Sex</label>
-                      <input
-                        type="text"
-                        value={transcription.participantsSex || ''}
-                        onChange={(e) => handleFieldChange('participantsSex', e.target.value)}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder="e.g., Female; Male"
-                      />
-                    </div>
+                    <MetadataField
+                      label="Nationalities"
+                      value={transcription.participantsNationalities}
+                      citation={transcription.participantsNationalitiesCitation}
+                      confidence={transcription.participantsNationalitiesConfidence}
+                      onChange={(value) => handleFieldChange('participantsNationalities', value)}
+                    />
+                    <MetadataField
+                      label="Sex"
+                      value={transcription.participantsSex}
+                      citation={transcription.participantsSexCitation}
+                      confidence={transcription.participantsSexConfidence}
+                      onChange={(value) => handleFieldChange('participantsSex', value)}
+                    />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Profile</label>
-                      <input
-                        type="text"
-                        value={transcription.participantsProfile || ''}
-                        onChange={(e) => handleFieldChange('participantsProfile', e.target.value)}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder="Separate multiple values with semicolons"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700">Environment</label>
-                      <input
-                        type="text"
-                        value={transcription.participantsEnvironment || ''}
-                        onChange={(e) => handleFieldChange('participantsEnvironment', e.target.value)}
-                        className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-                        placeholder="e.g., Urban; Rural; Camp; Settlement"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Other Information */}
-                <div className="space-y-4 md:col-span-2">
-                  <h4 className="font-medium text-gray-900">Other Information</h4>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Language</label>
-                    <input
-                      type="text"
-                      value={transcription.language || ''}
-                      onChange={(e) => handleFieldChange('language', e.target.value)}
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+                    <MetadataField
+                      label="Profile"
+                      value={transcription.participantsProfile}
+                      citation={transcription.participantsProfileCitation}
+                      confidence={transcription.participantsProfileConfidence}
+                      onChange={(value) => handleFieldChange('participantsProfile', value)}
+                    />
+                    <MetadataField
+                      label="Environment"
+                      value={transcription.participantsEnvironment}
+                      citation={transcription.participantsEnvironmentCitation}
+                      confidence={transcription.participantsEnvironmentConfidence}
+                      onChange={(value) => handleFieldChange('participantsEnvironment', value)}
                     />
                   </div>
                 </div>
