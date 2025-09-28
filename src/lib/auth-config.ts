@@ -1,6 +1,5 @@
 import Credentials from "next-auth/providers/credentials"
 import { UserRole } from "@/generated/prisma"
-import { authenticateUser } from "./auth"
 
 export const authConfig = {
   pages: {
@@ -44,6 +43,9 @@ export const authConfig = {
         if (!credentials?.username || !credentials?.password) {
           return null
         }
+
+        // Import here to avoid Edge Runtime issues in middleware
+        const { authenticateUser } = await import("./auth")
 
         const user = await authenticateUser(
           credentials.username as string,
