@@ -1,5 +1,5 @@
 FROM node:20-alpine AS base
-RUN apk add --no-cache libc6-compat curl
+RUN apk add --no-cache libc6-compat curl python3 make g++ && npm install -g node-gyp
 WORKDIR /app
 
 FROM base AS deps
