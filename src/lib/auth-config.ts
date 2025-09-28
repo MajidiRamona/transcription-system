@@ -1,4 +1,3 @@
-import type { NextAuthConfig } from "next-auth"
 import Credentials from "next-auth/providers/credentials"
 import { UserRole } from "@/generated/prisma"
 import { authenticateUser } from "./auth"
@@ -8,7 +7,7 @@ export const authConfig = {
     signIn: '/auth/signin',
   },
   callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
+    authorized({ auth, request: { nextUrl } }: { auth: any; request: { nextUrl: any } }) {
       const isLoggedIn = !!auth?.user
       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard')
 
@@ -21,14 +20,14 @@ export const authConfig = {
 
       return true
     },
-    session({ session, token }) {
+    session({ session, token }: { session: any; token: any }) {
       if (token.role) {
         session.user.role = token.role as UserRole
         session.user.id = token.sub!
       }
       return session
     },
-    jwt({ token, user }) {
+    jwt({ token, user }: { token: any; user?: any }) {
       if (user?.role) {
         token.role = user.role
       }
@@ -63,4 +62,4 @@ export const authConfig = {
       },
     }),
   ],
-} satisfies NextAuthConfig
+}
