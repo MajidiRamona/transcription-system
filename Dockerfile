@@ -4,7 +4,7 @@ FROM node:20-alpine AS base
 # Install dependencies only when needed
 FROM base AS deps
 # Check https://github.com/nodejs/docker-node/tree/b4117f9333da4138b03a546ec926ef50a31506c3#nodealpine
-RUN apk add --no-cache libc6-compat
+RUN apk add --no-cache libc6-compat curl
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
@@ -29,6 +29,7 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
+RUN apk add --no-cache curl
 RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
@@ -44,6 +45,9 @@ COPY --from=builder /app/src/generated ./src/generated
 # Copy scripts for database operations
 COPY --from=builder /app/src/scripts ./src/scripts
 RUN chmod +x ./src/scripts/init.sh
+
+# Copy Docker environment file
+COPY .env.docker ./.env
 
 # Install dependencies for runtime (including tsx for seeding)
 COPY package.json package-lock.json* ./

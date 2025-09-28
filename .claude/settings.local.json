@@ -10,7 +10,10 @@
       "Bash(npm:*)",
       "Bash(rm:*)",
       "Bash(npx next:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(npx prisma:*)",
+      "Bash(sqlite3:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []
