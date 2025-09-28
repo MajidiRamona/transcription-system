@@ -110,7 +110,7 @@ export async function extractMetadata(transcriptText: string): Promise<any> {
   }
 
   // Extract JSON from response
-  const jsonMatch = content.match(/\{.*\}/s)
+  const jsonMatch = content.match(/\{[\s\S]*\}/)
   const jsonStr = jsonMatch ? jsonMatch[0] : content
 
   try {
@@ -194,7 +194,7 @@ REMINDERS
   }
 
   // Extract JSON from response
-  const jsonMatch = content.match(/\{.*\}/s)
+  const jsonMatch = content.match(/\{[\s\S]*\}/)
   const jsonStr = jsonMatch ? jsonMatch[0] : content
 
   try {

@@ -64,7 +64,7 @@ interface Transcription {
   topics: Topic[]
 }
 
-export default function TranscriptionDetail({ params }: { params: { id: string } }) {
+export default function TranscriptionDetail({ params }: { params: Promise<{ id: string }> }) {
   const { data: session } = useSession()
   const router = useRouter()
   const [transcription, setTranscription] = useState<Transcription | null>(null)
@@ -72,14 +72,25 @@ export default function TranscriptionDetail({ params }: { params: { id: string }
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
   const [activeTab, setActiveTab] = useState<'content' | 'metadata' | 'topics'>('content')
+  const [id, setId] = useState<string>('')
 
   useEffect(() => {
-    fetchTranscription()
-  }, [params.id])
+    const resolveParams = async () => {
+      const resolvedParams = await params
+      setId(resolvedParams.id)
+    }
+    resolveParams()
+  }, [params])
+
+  useEffect(() => {
+    if (id) {
+      fetchTranscription()
+    }
+  }, [id])
 
   const fetchTranscription = async () => {
     try {
-      const response = await fetch(`/api/transcriptions/${params.id}`)
+      const response = await fetch(`/api/transcriptions/${id}`)
       if (response.ok) {
         const data = await response.json()
         setTranscription(data)
@@ -100,7 +111,7 @@ export default function TranscriptionDetail({ params }: { params: { id: string }
     setError('')
 
     try {
-      const response = await fetch(`/api/transcriptions/${params.id}`, {
+      const response = await fetch(`/api/transcriptions/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -135,7 +146,7 @@ export default function TranscriptionDetail({ params }: { params: { id: string }
     if (!transcription) return
 
     try {
-      const response = await fetch(`/api/transcriptions/${params.id}`, {
+      const response = await fetch(`/api/transcriptions/${id}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

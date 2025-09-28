@@ -6,9 +6,10 @@ import { processTranscriptionWithAI } from '@/lib/ai-service'
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user) {
@@ -16,7 +17,7 @@ export async function POST(
     }
 
     const transcription = await prisma.transcription.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!transcription) {
@@ -28,7 +29,7 @@ export async function POST(
 
     // Update state to indicate AI processing has started
     await prisma.transcription.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         state: TranscriptionState.CHECK_BY_AI,
         aiProcessedAt: new Date(),
@@ -42,7 +43,7 @@ export async function POST(
 
       // Update transcription with AI extracted metadata
       const updatedTranscription = await prisma.transcription.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           ...aiResult.metadata,
           state: TranscriptionState.CHECK_BY_VALIDATOR,
@@ -55,7 +56,7 @@ export async function POST(
       if (aiResult.topics && aiResult.topics.length > 0) {
         await prisma.topic.createMany({
           data: aiResult.topics.map((topic: any) => ({
-            transcriptionId: params.id,
+            transcriptionId: id,
             ...topic,
           })),
         })
@@ -63,7 +64,7 @@ export async function POST(
 
       // Return updated transcription with topics
       const result = await prisma.transcription.findUnique({
-        where: { id: params.id },
+        where: { id },
         include: {
           assignedTo: {
             select: {
@@ -87,7 +88,7 @@ export async function POST(
     } catch (aiError) {
       // Update transcription with AI error
       await prisma.transcription.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           aiError: aiError instanceof Error ? aiError.message : 'AI processing failed',
           state: TranscriptionState.PENDING,

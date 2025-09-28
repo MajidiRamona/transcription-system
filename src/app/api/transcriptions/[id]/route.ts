@@ -5,9 +5,10 @@ import { TranscriptionState } from '@/generated/prisma'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user) {
@@ -15,7 +16,7 @@ export async function GET(
     }
 
     const transcription = await prisma.transcription.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         assignedTo: {
           select: {
@@ -54,9 +55,10 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user) {
@@ -66,7 +68,7 @@ export async function PUT(
     const data = await request.json()
 
     const updatedTranscription = await prisma.transcription.update({
-      where: { id: params.id },
+      where: { id },
       data: {
         ...data,
         lastEditedById: session.user.id,
@@ -103,9 +105,10 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await auth()
 
     if (!session?.user || session.user.role !== 'ADMIN') {
@@ -113,7 +116,7 @@ export async function DELETE(
     }
 
     await prisma.transcription.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({ message: 'Transcription deleted successfully' })
