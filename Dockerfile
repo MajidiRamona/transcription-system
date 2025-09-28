@@ -43,10 +43,11 @@ COPY --from=builder /app/src/generated ./src/generated
 
 # Copy scripts for database operations
 COPY --from=builder /app/src/scripts ./src/scripts
+RUN chmod +x ./src/scripts/init.sh
 
-# Install production dependencies for runtime
+# Install dependencies for runtime (including tsx for seeding)
 COPY package.json package-lock.json* ./
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci --omit=optional && npm cache clean --force
 
 # Create database directory and set permissions
 RUN mkdir -p /app/data && chown nextjs:nodejs /app/data
@@ -62,4 +63,4 @@ ENV HOSTNAME="0.0.0.0"
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
   CMD curl -f http://localhost:3003/api/health || exit 1
 
-CMD ["node", "server.js"]
+CMD ["./src/scripts/init.sh"]

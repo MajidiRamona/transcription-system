@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build --turbopack",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "tsx src/scripts/seed.ts",
+    "seed:fgd": "tsx src/scripts/seed-fgd.ts"
   },
   "dependencies": {
     "@next-auth/prisma-adapter": "^1.0.7",

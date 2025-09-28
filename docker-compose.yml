@@ -38,6 +38,20 @@ services:
     restart: unless-stopped
     init: true
 
+  # Seeding service for manual operations
+  seed:
+    build: .
+    environment:
+      DATABASE_URL: file:./data/database.db
+      NODE_ENV: production
+    volumes:
+      - sqlite_data:/app/data
+    command: npm run seed:fgd
+    depends_on:
+      - app
+    profiles:
+      - tools
+
 volumes:
   sqlite_data:
 
